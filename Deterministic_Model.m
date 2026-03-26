@@ -1,0 +1,196 @@
+%% Signaling ODE System Solver
+% System includes: Histidine Kinase, Protein (U, U_P), mRNA (M), sRNA (S), RNA Sponge (R)
+%
+% STATE VARIABLES:
+%   y(1) = HK_sum   - Total histidine kinase
+%   y(2) = U        - Unphosphorylated response regulator
+%   y(3) = U_P      - Phosphorylated response regulator
+%   y(4) = M        - mRNA
+%   y(5) = S        - sRNA
+%   y(6) = R_sum    - RNA sponge
+%
+% NOTE: D_B (bound decoy) is treated as an algebraic variable derived from
+%       a quasi-steady-state approximation (see below).
+
+%% =========================================================
+%  1. PARAMETERS  –  edit these values as needed
+%% =========================================================
+p = struct();
+
+% Growth / dilution
+p.mu     = 0.0234;    % [1/time] dilution / growth rate
+
+% Histidine kinase
+p.HK_ss   = 50.0;            % [conc] HK steady state concentration
+p.beta_hk = p.mu*p.HK_ss;    % [conc/time] HK production rate
+
+% Phosphorylation / dephosphorylation
+p.k_f    = 6.12*10^3;     % [1/(conc·time)] forward (phosphorylation) rate constant
+p.k_d    = 4.0*10^(-3);     % [1/(conc·time)] dephosphorylation rate constant
+p.k_ap   = 0.02;     % [1/time]  autophosphatase / spontaneous dephosphorylation
+
+% Decoy binding
+p.k_Dplus  = 80;   % [1/(conc·time)] decoy binding rate
+p.k_Dminus = 1.008;  % [1/time]        decoy unbinding rate
+p.D_sum    = 20.0;   % [conc]          total decoy concentration
+
+% Translation
+p.k_tl   = 1.0;     % [1/time] translation rate (mRNA -> protein)
+
+% Transcription (Hill function)
+p.k_tx   = 0.4;     % [1/time] max transcription rate
+p.G_0    = 20.0;     % [conc]   gene copy number / promoter strength
+p.K_tx   = 0.0126;     % [conc]   Hill half-saturation constant
+p.n      = 2.0794;       % [-]      Hill coefficient
+
+% mRNA
+p.k_ms   = 10.81176;     % [1/(conc·time)] sRNA-mRNA binding rate
+p.delta_M = 0.246;    % [1/time]  mRNA degradation rate
+
+% sRNA
+p.delta_S = 0.048;   % [1/time]    sRNA degradation rate
+p.beta_S  = 1.0;    % [conc/time] sRNA production rate
+
+% RNA sponge
+p.Rsum_ss    = 1.0;    % [conc] spRNA steady state concentration
+p.delta_R = 0.2;    % [1/time]    sponge degradation rate
+p.beta_r  = p.delta_R*p.Rsum_ss;    % [conc/time] sponge production rate
+p.k_rs    = 0.4;    % [1/(conc·time)] sponge-sRNA binding rate
+
+%% =========================================================
+%  2. INITIAL CONDITIONS
+%% =========================================================
+HK_sum0 = 1.0;
+U0      = 1.0;
+U_P0    = 0.0;
+M0      = 0.0;
+S0      = 0.0;
+R_sum0  = 0.0;
+
+y0 = [HK_sum0; U0; U_P0; M0; S0; R_sum0];
+
+%% =========================================================
+%  3. TIME SPAN
+%% =========================================================
+tspan = [0, 200];   % [time units] – adjust as needed
+
+%% =========================================================
+%  4. SOLVE
+%% =========================================================
+opts = odeset('RelTol', 1e-8, 'AbsTol', 1e-10);
+[t, y] = ode45(@(t,y) odes(t, y, p), tspan, y0, opts);
+
+% Extract state variables
+HK_sum = y(:,1);
+U      = y(:,2);
+U_P    = y(:,3);
+M      = y(:,4);
+S      = y(:,5);
+R_sum  = y(:,6);
+
+% Derived: bound decoy D_B (quasi-steady-state from U_P / decoy interaction)
+D_B = (p.k_Dplus .* U_P .* p.D_sum) ./ (p.k_Dminus + p.k_Dplus .* U_P);
+
+%% =========================================================
+%  5. PLOT – U_P highlighted
+%% =========================================================
+figure('Name','Signalling System','NumberTitle','off','Color','w');
+
+% --- Main panel: U_P ---
+subplot(3,2,[1 2]);
+plot(t, U_P, 'b-', 'LineWidth', 2.5);
+xlabel('Time (minutes)');
+ylabel('Concentration (\muM)');
+title('U_P – Phosphorylated Response Regulator', 'FontWeight','bold');
+grid on;
+
+% --- All state variables ---
+subplot(3,2,3);
+plot(t, HK_sum, 'k-', 'LineWidth',1.5); hold on;
+plot(t, U,      'r-', 'LineWidth',1.5);
+plot(t, U_P,    'b-', 'LineWidth',1.5);
+legend('HK_{sum}','U','U_P','Location','best');
+xlabel('Time (min.)'); ylabel('Conc. (\muM)'); title('Kinase & Regulator'); grid on;
+
+subplot(3,2,4);
+plot(t, M, 'm-', 'LineWidth',1.5); hold on;
+plot(t, S, 'g-', 'LineWidth',1.5);
+legend('M (mRNA)','S (sRNA)','Location','best');
+xlabel('Time (min.)'); ylabel('Conc. (\muM)'); title('RNA Species'); grid on;
+
+subplot(3,2,5);
+plot(t, R_sum, 'c-', 'LineWidth',1.5);
+xlabel('Time (min.)'); ylabel('Conc. (\muM)'); title('R_{sum} (RNA Sponge)'); grid on;
+
+subplot(3,2,6);
+plot(t, D_B, 'Color',[0.8 0.4 0], 'LineWidth',1.5);
+xlabel('Time (min.)'); ylabel('Conc. (\muM)'); title('D_B (Bound Decoy, QSS)'); grid on;
+
+sgtitle('Signaling System – ODE Simulation', 'FontSize',14, 'FontWeight','bold');
+
+%% =========================================================
+%  6. PRINT STEADY-STATE SUMMARY
+%% =========================================================
+fprintf('\n=== Approximate Steady-State Values (last time point) ===\n');
+fprintf('  HK_sum : %.4f\n', HK_sum(end));
+fprintf('  U      : %.4f\n', U(end));
+fprintf('  U_P    : %.4f\n', U_P(end));
+fprintf('  M      : %.4f\n', M(end));
+fprintf('  S      : %.4f\n', S(end));
+fprintf('  R_sum  : %.4f\n', R_sum(end));
+fprintf('  D_B    : %.4f  (quasi-steady-state)\n', D_B(end));
+fprintf('=========================================================\n\n');
+
+%% =========================================================
+%  LOCAL FUNCTION: ODE RIGHT-HAND SIDE
+%% =========================================================
+function dydt = odes(~, y, p)
+    % Unpack state
+    HK_sum = y(1);
+    U      = y(2);
+    U_P    = y(3);
+    M      = y(4);
+    S      = y(5);
+    R_sum  = y(6);
+
+    % --- Derived quantities ---
+    % HK_tot is used as a proxy for active kinase (here HK_tot = HK_sum)
+    HK_tot = HK_sum;
+
+    % Denominator shared by phospho / dephospho terms
+    denom = p.k_ap + p.k_f * U + p.mu;
+
+    % Bound decoy via quasi-steady-state (avoids adding a stiff algebraic eq.)
+    %   dD_B/dt = k_D+ * U_P * (D_sum - D_B) - k_D- * D_B = 0
+    %   => D_B = k_D+ * U_P * D_sum / (k_D- + k_D+ * U_P)
+    D_B = (p.k_Dplus * U_P * p.D_sum) / (p.k_Dminus + p.k_Dplus * U_P);
+
+    % --- ODEs ---
+
+    % (1) HK_sum
+    dHK_sum = p.beta_hk - p.mu * HK_sum;
+
+    % (2) U  (unphosphorylated regulator)
+    phospho_U   = p.k_f  * HK_tot * (p.k_ap / denom)         * U;
+    dephospho_U = p.k_d  * HK_tot * ((p.k_f * U + p.mu) / denom) * U_P;
+    dU = -phospho_U + dephospho_U + p.k_tl * M - p.mu * U;
+
+    % (3) U_P (phosphorylated regulator)
+    dU_P = phospho_U - dephospho_U ...
+           - p.k_Dplus * U_P * (p.D_sum - D_B) ...
+           + p.k_Dminus * D_B ...
+           - p.mu * U_P;
+
+    % (4) M  (mRNA)
+    Hill = p.k_tx * p.G_0 * (U_P^p.n) / (p.K_tx^p.n + U_P^p.n);
+    dM   = Hill - p.k_ms * M * S - p.k_tl * M - p.delta_M * M;
+
+    % (5) S  (sRNA)
+    sponge_S = p.k_rs * (p.delta_R / (p.delta_R + p.k_rs * S)) * R_sum * S;
+    dS = p.beta_S - p.k_ms * M * S - sponge_S - p.delta_S * S;
+
+    % (6) R_sum (RNA sponge)
+    dR_sum = p.beta_r - p.delta_R * R_sum;
+
+    dydt = [dHK_sum; dU; dU_P; dM; dS; dR_sum];
+end
