@@ -27,10 +27,7 @@ p.beta_hk = p.mu*p.HK_ss;    % [conc/time] HK production rate
 % Phosphorylation / dephosphorylation
 p.k_f    = 6.12*10^3;     % [1/(conc·time)] forward (phosphorylation) rate constant
 p.k_d    = 4.0*10^(-3);     % [1/(conc·time)] dephosphorylation rate constant
-p.k_ap_max  = 0.02;     % [1/time]  autophosphatase / spontaneous dephosphorylation
-p.I      = 1000;         % [conc]  inducer concentration
-p.K_da   = 2000;        % [conc]  inducer dissociation constant
-p.k_ap   = p.k_ap_max*(p.I/(p.I+p.K_da));
+p.k_ap   = 0.02;     % [1/time]  autophosphatase / spontaneous dephosphorylation
 
 % Decoy binding
 p.k_Dplus  = 4;   % [1/(conc·time)] decoy binding rate
@@ -55,8 +52,8 @@ p.delta_S = 0.048;   % [1/time]    sRNA degradation rate
 p.beta_S  = 1.0;    % [conc/time] sRNA production rate
 
 % RNA sponge
-p.Rsum_ss = 1.0;    % [conc] spRNA steady state concentration
-p.delta_R = 0.246;    % [1/time]    sponge degradation rate
+p.Rsum_ss    = 1.0;    % [conc] spRNA steady state concentration
+p.delta_R = 0.2;    % [1/time]    sponge degradation rate
 p.beta_r  = p.delta_R*p.Rsum_ss;    % [conc/time] sponge production rate
 p.k_rs    = 951.36576;    % [1/(conc·time)] sponge-sRNA binding rate
 
@@ -197,4 +194,3 @@ function dydt = odes(~, y, p)
 
     dydt = [dHK_sum; dU; dU_P; dM; dS; dR_sum];
 end
-
