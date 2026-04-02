@@ -21,8 +21,10 @@ p = struct();
 p.mu     = 0.0234;    % [1/time] dilution / growth rate
 
 % Histidine kinase
-p.HK_ss   = 50.0;            % [conc] HK steady state concentration
+%p.HK_ss   = 0.167;           % [conc] HK steady state concentration
+p.HK_ss   = 50;
 p.beta_hk = p.mu*p.HK_ss;    % [conc/time] HK production rate
+
 
 % Phosphorylation / dephosphorylation
 p.k_f    = 6.12*10^3;     % [1/(conc·time)] forward (phosphorylation) rate constant
@@ -33,7 +35,7 @@ p.K_da   = 2000;        % [conc]  inducer dissociation constant
 p.k_ap   = p.k_ap_max*(p.I/(p.I+p.K_da));
 
 % Decoy binding
-p.k_Dplus  = 4;   % [1/(conc·time)] decoy binding rate
+p.k_Dplus  = 40;   % [1/(conc·time)] decoy binding rate
 p.k_Dminus = 0.0126*p.k_Dplus;  % [1/time]        decoy unbinding rate
 p.D_sum    = 20.0;   % [conc]         total decoy concentration
 
@@ -47,17 +49,19 @@ p.K_tx   = 0.0126;     % [conc]   Hill half-saturation constant
 p.n      = 2.0794;       % [-]      Hill coefficient
 
 % mRNA
-p.k_ms   = 10.81176;     % [1/(conc·time)] sRNA-mRNA binding rate
+%p.k_ms   = 10.81176;     % [1/(conc·time)] sRNA-mRNA binding rate
+p.k_ms    = 0.01344;
 p.delta_M = 0.246;    % [1/time]  mRNA degradation rate
 
 % sRNA
 p.delta_S = 0.048;   % [1/time]    sRNA degradation rate
-p.beta_S  = 1.0;    % [conc/time] sRNA production rate
+p.beta_S  = 100;    % [conc/time] sRNA production rate
 
 % RNA sponge
-p.Rsum_ss = 1.0;    % [conc] spRNA steady state concentration
-p.delta_R = 0.246;    % [1/time]    sponge degradation rate
-p.beta_r  = p.delta_R*p.Rsum_ss;    % [conc/time] sponge production rate
+p.Rsum_ss = 10;    % [conc] spRNA steady state concentration
+p.delta_R = 0.048;    % [1/time]    sponge degradation rate
+%p.beta_r  = p.delta_R*p.Rsum_ss;    % [conc/time] sponge production rate
+p.beta_r  = 10.0;
 p.k_rs    = 951.36576;    % [1/(conc·time)] sponge-sRNA binding rate
 
 %% =========================================================
@@ -186,7 +190,7 @@ function dydt = odes(~, y, p)
 
     % (4) M  (mRNA)
     Hill = p.k_tx * p.G_0 * (U_P^p.n) / (p.K_tx^p.n + U_P^p.n);
-    dM   = Hill - p.k_ms * M * S - p.k_tl * M - p.delta_M * M;
+    dM   = Hill - p.k_ms * M * S - p.delta_M * M;
 
     % (5) S  (sRNA)
     sponge_S = p.k_rs * (p.delta_R / (p.delta_R + p.k_rs * S)) * R_sum * S;
