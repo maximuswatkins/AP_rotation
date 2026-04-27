@@ -46,8 +46,8 @@ p.k_f_V   = p.k_f;
 p.k_d_V   = p.k_d;
 
 % Decoy binding
-p.k_Dplus  = 40;
-p.k_Dminus = 40;
+p.k_Dplus  = 1;
+p.k_Dminus = 1;
 p.D_tot    = 20.0;
 
 % Translation
@@ -69,14 +69,14 @@ p.delta_S = 0.048;
 p.beta_S  = 10.0;
 
 % RNA sponge
+%p.Rsum_ss = 10;
 p.delta_R = 0.048;
 p.beta_r  = 7.0;
 p.k_rs    = 1.0;
 
 % *** Dichotomous feedback strength (NEW) ***
 % P = 0 recovers the original model
-p.P_fb = 1.0;
-
+p.P_fb = 0.0;
 
 %% ====
 %  2. INITIAL CONDITIONS
@@ -209,7 +209,7 @@ end
 
 legend(leg_entries, 'Location', 'best');
 xlabel('Time (minutes)');
-ylabel('[U_P] (\muM)');
+ylabel('[U] (\muM)');
 title('Effect of Dichotomous Feedback Strength on U_P');
 grid on;
 box on;

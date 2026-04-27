@@ -65,6 +65,9 @@ p.delta_R = 0.048;           % [1/time] sponge degradation rate
 p.beta_r  = 7.0;             % [conc/time] sponge production rate
 p.k_rs    = 1.0;             % [1/(conc*time)] sponge-sRNA binding rate
 
+p.delta_R = 0;               % [1/time] sponge degradation rate
+p.beta_r  = 0;               % [conc/time] sponge production rate
+p.k_rs    = 0;               % [1/(conc*time)] sponge-sRNA binding rate
 
 %% =========================================================
 %  2. INITIAL CONDITIONS
@@ -74,10 +77,10 @@ U0      = 1.0;
 U_P0    = 0.0;
 M0      = 0.0;
 S0      = 0.0;
-R_sum0  = 0.0;
+%R_sum0  = 0.0;
 
-y0 = [HK_sum0; U0; U_P0; M0; S0; R_sum0];
-
+%y0 = [HK_sum0; U0; U_P0; M0; S0; R_sum0];
+y0 = [HK_sum0; U0; U_P0; M0; S0];
 
 %% =========================================================
 %  3. TIME SPAN
@@ -96,7 +99,7 @@ U      = y(:,2);
 U_P    = y(:,3);
 M      = y(:,4);
 S      = y(:,5);
-R_sum  = y(:,6);
+%R_sum  = y(:,6);
 
 % Bound DNA decoy
 D_B = (p.k_Dplus .* U_P .* p.D_tot) ./ (p.k_Dminus + p.k_Dplus .* U_P);
@@ -190,7 +193,7 @@ function dydt = odes(~, y, p)
     U_P    = y(3);
     M      = y(4);
     S      = y(5);
-    R_sum  = y(6);
+    %R_sum  = y(6);
 
     % --- Derived quantities ---
     % HK_tot is used as a proxy for active kinase (here HK_tot = HK_sum)
@@ -232,5 +235,4 @@ function dydt = odes(~, y, p)
     dR_sum = p.beta_r - p.delta_R * R_sum;
 
     dydt = [dHK_sum; dU; dU_P; dM; dS; dR_sum];
-   
 end
