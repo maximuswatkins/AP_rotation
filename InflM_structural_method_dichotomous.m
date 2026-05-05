@@ -61,44 +61,9 @@
 clear; clc;
 
 %% ====================================================================
-%  1. PARAMETERS (same as Deterministic_Model_Dichotomous.m)
+%  1. PARAMETERS
 %% ====================================================================
-p.mu       = 0.0234;
-p.HK_ss    = 100;
-p.beta_hk  = p.mu * p.HK_ss;
-p.k_ap_max = 0.02;
-p.I        = 2000;
-p.K_da     = 2000;
-p.k_ap     = p.k_ap_max * (p.I / (p.I + p.K_da));
-
-p.k_f      = 6.12e3;
-p.k_d      = 4.0e-3;
-p.k_f_V    = p.k_f;
-p.k_d_V    = p.k_d;
-
-p.k_Dplus  = 1.0;
-p.k_Dminus = 1.0;
-p.D_tot    = 20.0;
-
-p.k_tl     = 0.4;
-p.k_tl_V   = 0.4;
-
-p.k_tx     = 0.4;
-p.G_0      = 20.0;
-p.K_tx     = 0.0126;
-p.n        = 2.0794;
-
-p.k_ms     = 0.01344;
-p.delta_M  = 0.246;
-
-p.delta_S  = 0.048;
-p.beta_S   = 10.0;
-
-p.delta_R  = 0.048;
-p.beta_r   = 7.0;
-p.k_rs     = 1.0;
-
-p.P_fb     = 1.0;
+p = readstruct("parameters.json");
 
 %% ====================================================================
 %  2. FIND STEADY STATE
@@ -385,7 +350,7 @@ figure('Name','Structural Influence Matrix - Dichotomous Model', ...
        'Color','w','Position',[100 100 680 620]);
 
 color_map = containers.Map({'+','-','0','?'}, ...
-    {[0.20 0.70 0.20], [0.85 0.20 0.20], [0.88 0.88 0.88], [1.00 0.85 0.00]});
+    {[0 158 115]./255, [230 159 0]./255, [86 180 230]./255, [240 228 66]./255});
 
 hold on;
 for i = 1:n_states
@@ -394,27 +359,29 @@ for i = 1:n_states
         y_pos = n_states - i + 0.5;
         rectangle('Position',[x_pos-0.5, y_pos-0.5, 1, 1], ...
                   'FaceColor', color_map(M_struct{i,j}), ...
-                  'EdgeColor', 'w', 'LineWidth', 1.5);
+                  'EdgeColor', [0 0 0], 'LineWidth',1.5);
         text(x_pos, y_pos, M_struct{i,j}, ...
              'HorizontalAlignment','center','VerticalAlignment','middle', ...
-             'FontSize', 14, 'FontWeight','bold', 'Color','k');
+             'FontSize', 18, 'FontWeight','bold', 'Color','k');
     end
 end
-
+rectangle('Position',[0, 3, 6, 6], ...
+          'FaceColor', 'None', ...
+          'EdgeColor', [1 0 0], 'LineWidth', 4.5, 'LineStyle', '--');
 set(gca, 'XTick', (1:n_states)-0.5, 'XTickLabel', var_names, ...
          'YTick', (1:n_states)-0.5, 'YTickLabel', fliplr(var_names), ...
-         'TickLength',[0 0], 'FontSize', 11);
+         'TickLength',[0 0], 'FontSize', 13);
 xlim([0 n_states]); ylim([0 n_states]);
-title('Structural Influence Matrix — Dichotomous Feedback Model', ...
-      'FontSize', 13, 'FontWeight','bold');
-xlabel('Input variable (j)', 'FontSize', 11);
-ylabel('Output variable (i)', 'FontSize', 11);
+title('B. Structural Influence Matrix (Dichotomous)', ...
+      'FontSize', 15);
+xlabel('Input perturbation to variable j', 'FontSize', 13);
+ylabel('Effect on variable i', 'FontSize', 13);
 
-patch(NaN,NaN,[0.20 0.70 0.20],'DisplayName','+ (positive)');
-patch(NaN,NaN,[0.85 0.20 0.20],'DisplayName','- (negative)');
-patch(NaN,NaN,[0.88 0.88 0.88],'DisplayName','0 (perfect adaptation)');
-patch(NaN,NaN,[1.00 0.85 0.00],'DisplayName','? (indeterminate)');
-legend('Location','southoutside','Orientation','horizontal','FontSize',9);
+% patch(NaN,NaN,[0.20 0.70 0.20],'DisplayName','+ (positive)');
+% patch(NaN,NaN,[0.85 0.20 0.20],'DisplayName','- (negative)');
+% patch(NaN,NaN,[0.88 0.88 0.88],'DisplayName','0 (perfect adaptation)');
+% patch(NaN,NaN,[1.00 0.85 0.00],'DisplayName','? (indeterminate)');
+% legend('Location','southoutside','Orientation','horizontal','FontSize',9);
 
 %% ====================================================================
 %  LOCAL FUNCTIONS

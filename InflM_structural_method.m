@@ -281,7 +281,7 @@ fprintf('  and dephosphorylation, so net effect is parameter-dependent\n');
 figure('Name', 'Structural Influence Matrix', 'Position', [100 100 500 450]);
 
 n = 6;
-var_labels = {'h', 'u', 'p', 'm', 's', 'r'};
+var_labels = {'HK','U','U_P','M','S','R'};
 
 % Map symbols to numeric values for coloring
 %   +1 = positive (green), -1 = negative (red), 0 = zero (white), NaN = ambiguous (yellow)
@@ -306,15 +306,15 @@ for i = 1:n
     for j = 1:n
         val = num_plot(i, j);
         if val == 1
-            col = [0.4 0.8 0.4];      % green
+            col = [0 158 115]./255;      % green
         elseif val == -1
-            col = [0.9 0.35 0.35];    % red
+            col = [230 159 0]./255;    % orange
         elseif val == 0.5
-            col = [1.0 0.85 0.3];     % yellow (ambiguous)
+            col = [240 228 66]./255;     % yellow (ambiguous)
         else
-            col = [0.92 0.92 0.92];   % light grey (zero)
+            col = [86 180 230]./255;   % blue (zero)
         end
-        patch([j-1 j j j-1], [i-1 i-1 i i], col, 'EdgeColor', [0.5 0.5 0.5]);
+        patch([j-1 j j j-1], [i-1 i-1 i i], col, 'EdgeColor', [0 0 0], 'LineWidth', 1.5);
     end
 end
 
@@ -336,7 +336,7 @@ set(gca, 'XTick', (1:n) - 0.5, 'XTickLabel', var_labels, ...
          'TickLength', [0 0], 'FontSize', 13);
 xlabel('Input perturbation to variable j', 'FontSize', 13);
 ylabel('Effect on variable i', 'FontSize', 13);
-title('Structural Influence Matrix', 'FontSize', 15);
+title('A. Structural Influence Matrix (Non-Dichotomous)', 'FontSize', 15);
 
 xlim([0 n]); ylim([0 n]);
 axis square;
@@ -344,8 +344,8 @@ box on;
 hold off;
 
 % Add legend
-annotation('textbox', [0.02 0.01 0.96 0.05], ...
-    'String', '\color[rgb]{0.4,0.8,0.4}\bf+ positive   \color[rgb]{0.9,0.35,0.35}\bf- negative   \color[rgb]{1,0.85,0.3}\bf? ambiguous   \color[rgb]{0.6,0.6,0.6}\bf0 no effect (P.A.)', ...
-    'EdgeColor', 'none', 'HorizontalAlignment', 'center', ...
-    'FontSize', 11, 'FitBoxToText', 'off');
+% annotation('textbox', [0.02 0.01 0.96 0.05], ...
+%     'String', '\color[rgb]{0.4,0.8,0.4}\bf+ positive   \color[rgb]{0.9,0.35,0.35}\bf- negative   \color[rgb]{1,0.85,0.3}\bf? ambiguous   \color[rgb]{0.6,0.6,0.6}\bf0 no effect (P.A.)', ...
+%     'EdgeColor', 'none', 'HorizontalAlignment', 'center', ...
+%     'FontSize', 11, 'FitBoxToText', 'off');
 

@@ -16,59 +16,7 @@
 clear; clc; close all;
 
 %% ---- 1. Parameters ----
-p = struct();
-
-% Growth / dilution
-p.mu       = 0.0234;
-
-% Histidine kinase
-p.HK_ss    = 50;
-p.beta_hk  = p.mu * p.HK_ss;
-
-% Phosphotransfer (U)
-p.k_f      = 6.12e3;
-p.k_d      = 4.0e-3;
-p.k_ap_max = 0.02;
-p.I        = 1000;
-p.K_da     = 2000;
-p.k_ap     = p.k_ap_max * (p.I / (p.I + p.K_da));
-
-% Phosphotransfer (V) — same as U by default
-p.k_f_V    = p.k_f;
-p.k_d_V    = p.k_d;
-
-% Decoy (QSS)
-p.k_Dp     = 40.0;
-p.k_Dm     = 0.0126 * p.k_Dp;
-p.D_sum    = 20.0;
-
-% Translation
-p.k_tl     = 1.0;
-p.k_tl_V   = 1.0;
-
-% Transcription (Hill)
-p.k_tx     = 0.4;
-p.G_0      = 20.0;
-p.K_tx     = 0.0126;
-p.n_hill   = 2.0794;
-
-% mRNA-sRNA interaction
-p.k_ms     = 0.01344;
-
-% mRNA degradation
-p.delta_M  = 0.246;
-
-% sRNA
-p.beta_S   = 100;
-p.delta_S  = 0.048;
-
-% RNA sponge
-p.beta_r   = 10.0;
-p.delta_R  = 0.048;
-p.k_rs     = 951.36576;
-
-% Dichotomous feedback strength
-p.P_fb     = 0.4;
+p = readstruct("parameters.json");
 
 %% ---- 2. Simulate with ode45 ----
 x0 = [1; 1; 0; 0; 0; 0; 0; 0; 0];   % [H, U, U_P, M, S, R, V, V_P, M_V]
@@ -243,10 +191,10 @@ function dxdt = ode_system(~, x, p)
     dephospho_V = p.k_d_V * H * ((p.k_f * U + p.k_f_V * V + p.mu) / Delta) * V_P;
 
     % Decoy (QSS)
-    D_B = (p.k_Dp * U_P * p.D_sum) / (p.k_Dm + p.k_Dp * U_P);
+    D_B = (p.k_Dplus * U_P * p.D_tot) / (p.k_Dminus + p.k_Dplus * U_P);
 
     % Hill function
-    Hill = p.k_tx * p.G_0 * (U_P^p.n_hill) / (p.K_tx^p.n_hill + U_P^p.n_hill);
+    Hill = p.k_tx * p.G_0 * (U_P^p.n) / (p.K_tx^p.n + U_P^p.n);
 
     % Sponge absorption
     sponge_eff = p.k_rs * p.delta_R / (p.delta_R + p.k_rs * S);
@@ -255,7 +203,7 @@ function dxdt = ode_system(~, x, p)
     dH   = p.beta_hk - p.mu * H;
     dU   = -phospho_U + dephospho_U + p.k_tl * M - p.mu * U;
     dU_P = phospho_U - dephospho_U ...
-           - p.k_Dp * U_P * (p.D_sum - D_B) + p.k_Dm * D_B ...
+           - p.k_Dplus * U_P * (p.D_tot - D_B) + p.k_Dminus * D_B ...
            - p.mu * U_P;
     dM   = Hill - p.k_ms * M * S - p.delta_M * M;
     dS   = p.beta_S - p.k_ms * M * S - p.k_ms * M_V * S ...
@@ -283,9 +231,9 @@ function J = compute_jacobian(x_ss, p)
     B_U  = (p.k_f * U + p.k_f_V * V + p.mu) / Delta;
 
     % Hill function and its derivative w.r.t. U_P
-    Hill_val   = p.k_tx * p.G_0 * (U_P^p.n_hill) / (p.K_tx^p.n_hill + U_P^p.n_hill);
-    H_frac     = (U_P^p.n_hill) / (p.K_tx^p.n_hill + U_P^p.n_hill);
-    dHill_dUP  = (Hill_val / U_P) * p.n_hill * (1 - H_frac);
+    Hill_val   = p.k_tx * p.G_0 * (U_P^p.n) / (p.K_tx^p.n + U_P^p.n);
+    H_frac     = (U_P^p.n) / (p.K_tx^p.n + U_P^p.n);
+    dHill_dUP  = (Hill_val / U_P) * p.n * (1 - H_frac);
 
     % Sponge terms
     sponge_denom = p.delta_R + p.k_rs * S;

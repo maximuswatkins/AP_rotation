@@ -1,5 +1,4 @@
 %% ========================================================================
-%  main_ode45_stability.m
 %  
 %  Nonlinear ODE simulation (ode45), steady-state finding, Jacobian
 %  construction, eigenvalue stability analysis, and numerical influence
@@ -11,54 +10,8 @@
 clear; clc; close all;
 
 %% ---- 1. Define model parameters ----------------------------------------
-% (Replace these with your actual parameter values)
 
-params = struct;
-
-% Growth / dilution
-params.mu      = 0.0234;       % dilution rate (1/min)
-
-% Histidine kinase
-params.HK_ss   = 50;
-params.beta_hk = params.mu*params.HK_ss;        % constitutive HK production rate
-
-% Phosphotransfer
-params.k_f     = 6.12*10^3;        % forward phosphotransfer rate
-params.k_d     = 4.0*10^(-3);      % reverse (dephosphorylation) rate
-
-params.k_ap_max = 0.02;            % maximum autophosphorylation rate
-params.Inducer  = 1000;            % inducer concentration
-params.K_da     = 2000;            % inducer dissociation constant
-params.k_ap     = params.k_ap_max*(params.Inducer/(params.Inducer+params.K_da));        % autophosphorylation rate
-
-% Translation
-params.k_tl    = 1.0;        % translation rate
-
-% Transcription (Hill function)
-params.k_tx    = 0.4;        % max transcription rate
-params.G_0     = 20;          % gene copy number
-params.K_tx    = 0.0126;      % Hill function half-saturation
-params.n_hill  = 2.0794;      % Hill coefficient
-
-% mRNA-sRNA interaction
-params.k_ms    = 0.01344;         % mRNA-sRNA binding rate
-
-% mRNA degradation
-params.delta_M = 0.246;        % mRNA degradation rate
-
-% sRNA
-params.beta_S  = 100;        % sRNA production rate
-params.delta_S = 0.048;       % sRNA degradation rate
-
-% RNA sponge
-params.beta_r  = 10.0;        % sponge production rate
-params.delta_R = 0.048;        % sponge degradation rate
-params.k_rs    = 951.36576;          % sponge-sRNA binding rate
-
-% Decoy (QSS parameters — used only for steady-state computation)
-params.k_Dp    = 40.0;                    % decoy binding rate (k_{D+})
-params.k_Dm    = 0.0126*params.k_Dp;        % decoy unbinding rate (k_{D-})
-params.D_sum   = 20.0;                    % total decoy DNA concentration
+params = readstruct("parameters.json");
 
 %% ---- 2. Simulate the full nonlinear system with ode45 ------------------
 
@@ -241,7 +194,7 @@ function dxdt = ode_system(~, x, p)
     Phi = p.k_ap + p.k_f*u + p.mu;
     A   = p.k_ap / Phi;
     B   = (p.k_f*u + p.mu) / Phi;
-    Hill = pp^p.n_hill / (p.K_tx^p.n_hill + pp^p.n_hill);
+    Hill = pp^p.n / (p.K_tx^p.n + pp^p.n);
     
     % Effective sponge absorption rate
     sponge_eff = p.k_rs * p.delta_R / (p.delta_R + p.k_rs * s);
@@ -264,7 +217,7 @@ function J = compute_jacobian(x_ss, p)
     Phi = p.k_ap + p.k_f*u + p.mu;
     A   = p.k_ap / Phi;
     B   = (p.k_f*u + p.mu) / Phi;
-    H_val = pp^p.n_hill / (p.K_tx^p.n_hill + pp^p.n_hill);
+    H_val = pp^p.n / (p.K_tx^p.n + pp^p.n);
     
     % Row 1 (h): decoupled
     J11 = -p.mu;
@@ -283,7 +236,7 @@ function J = compute_jacobian(x_ss, p)
     J33 = -p.k_d * h * B - p.mu;
     
     % Row 4 (m):
-    dHill_dp = p.n_hill * H_val * (1 - H_val) / pp;
+    dHill_dp = p.n * H_val * (1 - H_val) / pp;
     J43 = p.k_tx * p.G_0 * dHill_dp;
     J44 = -p.k_ms * s - p.delta_M;
     J45 = -p.k_ms * m;
