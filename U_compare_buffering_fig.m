@@ -7,10 +7,10 @@ labels = {
     'DNA + spRNA'
     'DNA + Dichotomous'
     'spRNA + Dichotomous'
-    'DNA only'
-    'spRNA only'
-    'Dichotomous only'
-    'No buffering'
+    'DNA'
+    'spRNA'
+    'Dichotomous'
+    'No additional buffering'
 };
 
 % Steady-state values from table
